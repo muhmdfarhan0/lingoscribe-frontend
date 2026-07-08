@@ -1,4 +1,4 @@
-const API_URL = "http://localhost:8000";
+const API_URL = "https://lingoscribe-backend-wb3k.onrender.com";
 
 const uploadZone     = document.getElementById("uploadZone");
 const fileInput      = document.getElementById("audioFile");
