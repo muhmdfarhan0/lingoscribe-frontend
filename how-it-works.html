@@ -1,0 +1,358 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>How LingoScribe Works — Urdu & Punjabi AI Speech Pipeline Explained</title>
+
+  <!-- Primary SEO -->
+  <meta name="description" content="Learn how LingoScribe transcribes Urdu and Punjabi speech to text. A step-by-step breakdown of the browser, FastAPI backend, Groq Whisper, and LLM translation pipeline." />
+  <meta name="keywords" content="how urdu speech recognition works, urdu speech to text pipeline, groq whisper urdu, fastapi speech recognition, punjabi ai transcription, speech to text api urdu, urdu nlp pipeline, audio transcription architecture" />
+  <meta name="author" content="Muhammad Farhan" />
+  <meta name="robots" content="index, follow" />
+  <meta name="theme-color" content="#0F1E35" />
+  <link rel="canonical" href="https://lingoscribe-frontend.vercel.app/how-it-works.html" />
+
+  <!-- Open Graph -->
+  <meta property="og:type" content="article" />
+  <meta property="og:site_name" content="LingoScribe" />
+  <meta property="og:title" content="How LingoScribe Works — Urdu & Punjabi AI Speech Pipeline" />
+  <meta property="og:description" content="Step-by-step breakdown of how LingoScribe transcribes Urdu and Punjabi audio — from browser upload through Groq Whisper, LLM translation, and AI insights." />
+  <meta property="og:url" content="https://lingoscribe-frontend.vercel.app/how-it-works.html" />
+  <meta property="og:image" content="https://lingoscribe-frontend.vercel.app/how-it-works-diagram.png" />
+  <meta property="og:image:width" content="1344" />
+  <meta property="og:image:height" content="896" />
+  <meta property="og:image:alt" content="LingoScribe system architecture — browser, FastAPI backend, Groq Whisper and LLM" />
+
+  <!-- Twitter Card -->
+  <meta name="twitter:card" content="summary_large_image" />
+  <meta name="twitter:title" content="How LingoScribe Works — Urdu & Punjabi AI Speech Pipeline" />
+  <meta name="twitter:description" content="Step-by-step breakdown of how LingoScribe transcribes Urdu and Punjabi speech — Groq Whisper, LLM translation, FastAPI, Docker." />
+  <meta name="twitter:image" content="https://lingoscribe-frontend.vercel.app/how-it-works-diagram.png" />
+  <meta name="twitter:image:alt" content="LingoScribe architecture diagram" />
+  <meta name="twitter:creator" content="@muhmdfarhan0" />
+
+  <!-- Structured Data -->
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "TechArticle",
+    "headline": "How LingoScribe Works — Urdu & Punjabi AI Speech Pipeline Explained",
+    "description": "A detailed walkthrough of the LingoScribe speech-to-text pipeline: browser upload, FastAPI backend on Render, Groq Whisper large-v3 transcription, LLM batch translation, and AI insights.",
+    "url": "https://lingoscribe-frontend.vercel.app/how-it-works.html",
+    "image": "https://lingoscribe-frontend.vercel.app/how-it-works-diagram.png",
+    "author": {
+      "@type": "Person",
+      "name": "Muhammad Farhan",
+      "url": "https://www.farhanai.online"
+    },
+    "publisher": {
+      "@type": "Organization",
+      "name": "LingoScribe",
+      "url": "https://lingoscribe-frontend.vercel.app"
+    },
+    "about": {
+      "@type": "SoftwareApplication",
+      "name": "LingoScribe",
+      "applicationCategory": "MultimediaApplication"
+    },
+    "keywords": "urdu speech to text, groq whisper, fastapi, punjabi transcription, nlp pipeline"
+  }
+  </script>
+
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;0,600;1,300;1,400;1,500&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="style.css" />
+  <link rel="stylesheet" href="how-it-works.css" />
+</head>
+<body>
+
+  <!-- NAV -->
+  <nav>
+    <a href="/" class="nav-brand">
+      <svg class="logo-mark" width="36" height="36" viewBox="0 0 36 36" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <rect width="36" height="36" rx="8" fill="#0F1E35"/>
+        <rect x="7"  y="13" width="3.2" height="10" rx="1.6" fill="#F7F2E9"/>
+        <rect x="12" y="9"  width="3.2" height="18" rx="1.6" fill="#F7F2E9"/>
+        <rect x="17" y="5"  width="3.2" height="26" rx="1.6" fill="#F7F2E9"/>
+        <rect x="22" y="9"  width="3.2" height="18" rx="1.6" fill="#F7F2E9"/>
+        <rect x="27" y="13" width="3.2" height="10" rx="1.6" fill="#F7F2E9"/>
+      </svg>
+      <span class="wordmark">LingoScribe</span>
+    </a>
+    <div class="nav-links">
+      <a href="/how-it-works.html" class="nav-active">How it works</a>
+      <a href="https://github.com/muhmdfarhan0" target="_blank" rel="noopener">GitHub</a>
+      <a href="https://www.linkedin.com/in/muhammad-farhan07567" target="_blank" rel="noopener">LinkedIn</a>
+      <a href="https://www.farhanai.online/contact" target="_blank" rel="noopener" class="nav-cta">Contact</a>
+    </div>
+  </nav>
+
+  <!-- HERO -->
+  <section class="hiw-hero">
+    <div class="hiw-hero-inner">
+      <p class="hiw-eyebrow">Architecture</p>
+      <h1 class="hiw-heading">
+        How <em>LingoScribe</em> works
+      </h1>
+      <p class="hiw-desc">
+        A full-stack AI pipeline that takes raw audio in Urdu or Punjabi and returns
+        structured transcription, English translation, and language insights — in seconds.
+      </p>
+      <a href="/" class="hiw-try-btn">Try it now</a>
+    </div>
+  </section>
+
+  <!-- DIAGRAM -->
+  <section class="hiw-diagram-section">
+    <div class="hiw-inner">
+      <img
+        src="how-it-works-diagram.png"
+        alt="LingoScribe system architecture showing browser, FastAPI backend on Render, and Groq Cloud with Whisper large-v3 and LLM models"
+        class="hiw-diagram"
+        width="1344"
+        height="896"
+        loading="eager"
+      />
+    </div>
+  </section>
+
+  <!-- THREE PILLARS -->
+  <section class="hiw-pillars">
+    <div class="hiw-inner">
+      <div class="hiw-section-label">The three layers</div>
+      <div class="hiw-pillars-grid">
+
+        <article class="hiw-pillar">
+          <div class="hiw-pillar-num">01</div>
+          <h2 class="hiw-pillar-title">Your Browser</h2>
+          <p class="hiw-pillar-sub">lingoscribe-frontend.vercel.app</p>
+          <p class="hiw-pillar-body">
+            A zero-dependency static frontend served from Vercel. No framework, no build step.
+            The browser collects audio — either a file you drop or a live recording via the
+            <code>MediaRecorder</code> API — and sends it as a multipart HTTP request directly
+            to the backend. All three API calls (<code>/transcribe</code>, <code>/analyze</code>,
+            <code>/ask</code>) are plain <code>fetch()</code> calls over HTTPS.
+          </p>
+          <ul class="hiw-pillar-list">
+            <li>Upload any audio format — WAV, MP3, OGG, FLAC, M4A, WEBM, AAC, WMA</li>
+            <li>Record live from microphone with real-time timer</li>
+            <li>Transcript table with timestamps, original text, English translation</li>
+            <li>AI insights rendered after transcription completes</li>
+            <li>Natural language Q&amp;A about the transcript</li>
+          </ul>
+        </article>
+
+        <article class="hiw-pillar">
+          <div class="hiw-pillar-num">02</div>
+          <h2 class="hiw-pillar-title">Backend API</h2>
+          <p class="hiw-pillar-sub">FastAPI · Docker · Render</p>
+          <p class="hiw-pillar-body">
+            A Python FastAPI app packaged in a Docker container and deployed on Render.
+            It acts as a secure orchestration layer — the Groq API key never leaves the server.
+            <code>ffmpeg</code> converts non-standard audio formats before forwarding to Groq.
+            CORS is configured to accept requests only from the Vercel frontend domain.
+          </p>
+          <ul class="hiw-pillar-list">
+            <li><strong>/transcribe</strong> — receives audio, calls Groq Whisper, batch-translates segments</li>
+            <li><strong>/analyze</strong> — sends transcript to Groq LLM, returns structured JSON insights</li>
+            <li><strong>/ask</strong> — answers natural language questions about the transcript</li>
+            <li><strong>/health</strong> — used by Render for liveness checks</li>
+          </ul>
+        </article>
+
+        <article class="hiw-pillar">
+          <div class="hiw-pillar-num">03</div>
+          <h2 class="hiw-pillar-title">Groq Cloud</h2>
+          <p class="hiw-pillar-sub">api.groq.com</p>
+          <p class="hiw-pillar-body">
+            Groq provides both the speech model and the language model — on the same
+            infrastructure, at very low latency. Transcription uses Whisper large-v3,
+            OpenAI's most accurate open-source speech model. All text tasks (translation,
+            insights, Q&amp;A) use <code>openai/gpt-oss-120b</code> via the chat completions API.
+          </p>
+          <ul class="hiw-pillar-list">
+            <li><strong>Whisper large-v3</strong> — transcription with segment timestamps and language detection</li>
+            <li><strong>GPT-OSS-120B</strong> — batch segment translation to English in one call</li>
+            <li><strong>GPT-OSS-120B</strong> — summary, key topics, tone, and speech observation</li>
+            <li><strong>GPT-OSS-120B</strong> — Q&amp;A grounded in the transcript</li>
+          </ul>
+        </article>
+
+      </div>
+    </div>
+  </section>
+
+  <!-- STEP BY STEP -->
+  <section class="hiw-steps">
+    <div class="hiw-inner">
+      <div class="hiw-section-label">Step-by-step workflow</div>
+      <h2 class="hiw-steps-heading">From audio to insight in 9 steps</h2>
+      <ol class="hiw-steps-list">
+        <li class="hiw-step">
+          <span class="hiw-step-num">1</span>
+          <div>
+            <strong>Upload or record</strong>
+            <p>User drops an audio file or clicks the mic button to record. Any format is accepted — the browser passes it as-is.</p>
+          </div>
+        </li>
+        <li class="hiw-step">
+          <span class="hiw-step-num">2</span>
+          <div>
+            <strong>Send to backend</strong>
+            <p>The browser sends a <code>POST /transcribe</code> request with the audio as multipart form data over HTTPS.</p>
+          </div>
+        </li>
+        <li class="hiw-step">
+          <span class="hiw-step-num">3</span>
+          <div>
+            <strong>Format conversion</strong>
+            <p>If the format is not natively supported by Groq (e.g. WMA), ffmpeg converts it to MP3 before forwarding.</p>
+          </div>
+        </li>
+        <li class="hiw-step">
+          <span class="hiw-step-num">4</span>
+          <div>
+            <strong>Transcription on Groq</strong>
+            <p>The audio bytes are posted to Groq's Whisper large-v3 endpoint. The model detects the language (Urdu, Punjabi, etc.) and returns time-stamped segments.</p>
+          </div>
+        </li>
+        <li class="hiw-step">
+          <span class="hiw-step-num">5</span>
+          <div>
+            <strong>Batch translation</strong>
+            <p>All segment texts are sent to Groq's LLM in a single prompt. The model returns one English translation per segment as a JSON array — one API call for all segments.</p>
+          </div>
+        </li>
+        <li class="hiw-step">
+          <span class="hiw-step-num">6</span>
+          <div>
+            <strong>Response to browser</strong>
+            <p>Backend returns structured JSON: detected language, language probability, and the list of segments each with start/end times, original text, and English translation.</p>
+          </div>
+        </li>
+        <li class="hiw-step">
+          <span class="hiw-step-num">7</span>
+          <div>
+            <strong>Render transcript table</strong>
+            <p>The browser renders the segments as a table. Original Urdu/Punjabi text uses RTL-aware rendering; English translation shows in the adjacent column.</p>
+          </div>
+        </li>
+        <li class="hiw-step">
+          <span class="hiw-step-num">8</span>
+          <div>
+            <strong>AI insights</strong>
+            <p>The frontend automatically sends a <code>POST /analyze</code> with the full translated transcript. Groq LLM returns a JSON object with summary, key topics, tone, and a linguistic observation.</p>
+          </div>
+        </li>
+        <li class="hiw-step">
+          <span class="hiw-step-num">9</span>
+          <div>
+            <strong>Ask anything</strong>
+            <p>The user types any question about the transcript. A <code>POST /ask</code> sends the transcript and question together; the LLM answers from the transcript content only.</p>
+          </div>
+        </li>
+      </ol>
+    </div>
+  </section>
+
+  <!-- SECURITY -->
+  <section class="hiw-security">
+    <div class="hiw-inner">
+      <div class="hiw-section-label">Security &amp; privacy</div>
+      <div class="hiw-security-grid">
+        <div class="hiw-security-card">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round">
+            <rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0110 0v4"/>
+          </svg>
+          <strong>HTTPS everywhere</strong>
+          <p>All traffic between browser, backend, and Groq is encrypted in transit.</p>
+        </div>
+        <div class="hiw-security-card">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round">
+            <circle cx="12" cy="12" r="10"/><path d="M2 12h20M12 2a15.3 15.3 0 010 20M12 2a15.3 15.3 0 000 20"/>
+          </svg>
+          <strong>CORS restricted</strong>
+          <p>The backend only accepts requests from the Vercel frontend domain — no third-party access.</p>
+        </div>
+        <div class="hiw-security-card">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round">
+            <path d="M21 2l-2 2m-7.61 7.61a5.5 5.5 0 11-7.778 7.778 5.5 5.5 0 017.777-7.777zm0 0L15.5 7.5m0 0l3 3L22 7l-3-3m-3.5 3.5L19 4"/>
+          </svg>
+          <strong>API key server-side only</strong>
+          <p>The Groq API key is stored as an environment variable on Render — never sent to the browser or committed to GitHub.</p>
+        </div>
+        <div class="hiw-security-card">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round">
+            <polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14H6L5 6"/><path d="M10 11v6M14 11v6"/><path d="M9 6V4h6v2"/>
+          </svg>
+          <strong>No data stored</strong>
+          <p>Audio files are written to a temporary directory and deleted immediately after processing. Nothing is persisted.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- TECH STACK -->
+  <section class="hiw-stack">
+    <div class="hiw-inner">
+      <div class="hiw-section-label">Tech stack</div>
+      <div class="hiw-stack-table-wrap">
+        <table class="hiw-stack-table">
+          <thead>
+            <tr><th>Layer</th><th>Technology</th><th>Role</th></tr>
+          </thead>
+          <tbody>
+            <tr><td>Frontend</td><td>HTML · CSS · JavaScript</td><td>Static UI, file upload, MediaRecorder, fetch API</td></tr>
+            <tr><td>Hosting (frontend)</td><td>Vercel</td><td>Static site deployment, global CDN</td></tr>
+            <tr><td>Backend</td><td>FastAPI + Uvicorn</td><td>REST API, multipart file handling, CORS</td></tr>
+            <tr><td>Container</td><td>Docker (python:3.11-slim)</td><td>Reproducible runtime, ffmpeg included</td></tr>
+            <tr><td>Hosting (backend)</td><td>Render</td><td>Docker web service, environment secrets</td></tr>
+            <tr><td>Transcription</td><td>Groq Whisper large-v3</td><td>Urdu/Punjabi speech to text with timestamps</td></tr>
+            <tr><td>Translation</td><td>Groq GPT-OSS-120B</td><td>Batch segment translation to English</td></tr>
+            <tr><td>Insights &amp; Q&amp;A</td><td>Groq GPT-OSS-120B</td><td>Summary, topics, tone, question answering</td></tr>
+            <tr><td>Format conversion</td><td>ffmpeg</td><td>WMA and other non-Groq-native formats → MP3</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </section>
+
+  <!-- CTA -->
+  <section class="hiw-cta">
+    <div class="hiw-inner hiw-cta-inner">
+      <h2 class="hiw-cta-heading">Ready to try it?</h2>
+      <p class="hiw-cta-desc">Upload an Urdu or Punjabi audio file or record directly from your microphone — no signup needed.</p>
+      <div class="hiw-cta-links">
+        <a href="/" class="hiw-cta-btn-primary">Launch LingoScribe</a>
+        <a href="https://github.com/muhmdfarhan0/lingoscribe-backend" target="_blank" rel="noopener" class="hiw-cta-btn-secondary">View source on GitHub</a>
+      </div>
+    </div>
+  </section>
+
+  <!-- FOOTER -->
+  <footer>
+    <div class="footer-inner">
+      <div class="footer-brand">
+        <svg width="24" height="24" viewBox="0 0 36 36" fill="none">
+          <rect width="36" height="36" rx="8" fill="#0F1E35"/>
+          <rect x="7"  y="13" width="3.2" height="10" rx="1.6" fill="#F7F2E9"/>
+          <rect x="12" y="9"  width="3.2" height="18" rx="1.6" fill="#F7F2E9"/>
+          <rect x="17" y="5"  width="3.2" height="26" rx="1.6" fill="#F7F2E9"/>
+          <rect x="22" y="9"  width="3.2" height="18" rx="1.6" fill="#F7F2E9"/>
+          <rect x="27" y="13" width="3.2" height="10" rx="1.6" fill="#F7F2E9"/>
+        </svg>
+        <span>LingoScribe</span>
+      </div>
+      <p class="footer-desc">Speech intelligence for Urdu and Punjabi.</p>
+      <div class="footer-links">
+        <a href="https://github.com/muhmdfarhan0" target="_blank" rel="noopener">GitHub</a>
+        <a href="https://www.linkedin.com/in/muhammad-farhan07567" target="_blank" rel="noopener">LinkedIn</a>
+        <a href="https://www.farhanai.online/contact" target="_blank" rel="noopener">Contact</a>
+      </div>
+    </div>
+  </footer>
+
+</body>
+</html>
