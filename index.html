@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>LingoScribe Mini</title>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <div class="container">
+    <header>
+      <h1>LingoScribe Mini</h1>
+      <p class="subtitle">Speech transcription &amp; translation for Urdu / Punjabi</p>
+    </header>
+
+    <section class="upload-section">
+      <label for="audioFile" class="file-label">
+        <span id="fileName">Choose an audio file…</span>
+        <input type="file" id="audioFile" accept="audio/*" />
+      </label>
+      <button id="processBtn" disabled>Process</button>
+    </section>
+
+    <div id="status" class="status hidden"></div>
+
+    <section id="resultsSection" class="hidden">
+      <div class="meta">
+        <span>Language detected: <strong id="langDetected">—</strong></span>
+        <span>Confidence: <strong id="langConf">—</strong></span>
+      </div>
+      <div class="table-wrapper">
+        <table id="resultsTable">
+          <thead>
+            <tr id="tableHead"></tr>
+          </thead>
+          <tbody id="tableBody"></tbody>
+        </table>
+      </div>
+    </section>
+  </div>
+
+  <script src="app.js"></script>
+</body>
+</html>
