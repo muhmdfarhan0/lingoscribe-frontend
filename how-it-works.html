@@ -98,16 +98,18 @@
         How <em>LingoScribe</em> works
       </h1>
       <p class="hiw-desc">
-        A full-stack AI pipeline that takes raw audio in Urdu or Punjabi and returns
-        structured transcription, English translation, and language insights in seconds.
+        Two independent speech engines, one clean interface. Choose between cloud-powered
+        Groq Whisper with full translation and AI insights, or a self-hosted Whisper model
+        running on HuggingFace with zero external API calls.
       </p>
       <a href="/" class="hiw-try-btn">Try it now</a>
     </div>
   </section>
 
-  <!-- DIAGRAM -->
+  <!-- DIAGRAM 1 -->
   <section class="hiw-diagram-section">
     <div class="hiw-inner">
+      <p class="hiw-section-label" style="margin-bottom:1.2rem;">System overview</p>
       <img
         src="how-it-works-diagram.png"
         alt="LingoScribe system architecture showing browser, FastAPI backend on Render, and Groq Cloud with Whisper large-v3 and LLM models"
@@ -119,10 +121,29 @@
     </div>
   </section>
 
+  <!-- DIAGRAM 2 -->
+  <section class="hiw-diagram-section" style="border-top:1px solid var(--border);">
+    <div class="hiw-inner">
+      <p class="hiw-section-label" style="margin-bottom:1.2rem;">Self-hosted Whisper on HuggingFace</p>
+      <img
+        src="architecture-diagram.png"
+        alt="LingoScribe self-hosted Whisper engine running on HuggingFace Spaces Docker container with faster-whisper small model"
+        class="hiw-diagram"
+        loading="lazy"
+      />
+      <p style="margin-top:1rem;font-size:.85rem;color:var(--ink-3);line-height:1.6;">
+        The self-hosted engine runs <strong>faster-whisper small</strong> (int8 quantized) inside a Docker container
+        on HuggingFace Spaces free CPU tier. The model weights are baked into the Docker image at build time
+        so the container starts in seconds with no download on every cold start. Language is forced to Urdu
+        to guarantee Perso-Arabic script output for both Urdu and Pakistani Punjabi (Shahmukhi).
+      </p>
+    </div>
+  </section>
+
   <!-- THREE PILLARS -->
   <section class="hiw-pillars">
     <div class="hiw-inner">
-      <div class="hiw-section-label">The three layers</div>
+      <div class="hiw-section-label">Two engines, one interface</div>
       <div class="hiw-pillars-grid">
 
         <article class="hiw-pillar">
@@ -131,53 +152,50 @@
           <p class="hiw-pillar-sub">lingoscribe-frontend.vercel.app</p>
           <p class="hiw-pillar-body">
             A zero-dependency static frontend served from Vercel. No framework, no build step.
-            The browser collects audio, either a file you drop or a live recording via the
-            <code>MediaRecorder</code> API, and sends it as a multipart HTTP request directly
-            to the backend. All three API calls (<code>/transcribe</code>, <code>/analyze</code>,
-            <code>/ask</code>) are plain <code>fetch()</code> calls over HTTPS.
+            An engine toggle lets you switch between Groq Orchestration (full pipeline) and
+            Self-hosted Whisper (transcription only) before submitting. Audio is sent as a
+            multipart <code>fetch()</code> request to whichever engine is selected.
           </p>
           <ul class="hiw-pillar-list">
-            <li>Upload any audio format: WAV, MP3, OGG, FLAC, M4A, WEBM, AAC, WMA</li>
+            <li>Upload any format: WAV, MP3, OGG, FLAC, M4A, WEBM, AAC, WMA</li>
             <li>Record live from microphone with real-time timer</li>
-            <li>Transcript table with timestamps, original text, English translation</li>
-            <li>AI insights rendered after transcription completes</li>
-            <li>Natural language Q&amp;A about the transcript</li>
+            <li>Both backends pinged on load to keep them warm</li>
+            <li>Translation, insights, and Q&amp;A shown only in Groq mode</li>
           </ul>
         </article>
 
         <article class="hiw-pillar">
           <div class="hiw-pillar-num">02</div>
-          <h2 class="hiw-pillar-title">Backend API</h2>
-          <p class="hiw-pillar-sub">FastAPI · Docker · Render</p>
+          <h2 class="hiw-pillar-title">Groq Orchestration</h2>
+          <p class="hiw-pillar-sub">FastAPI · Docker · Render + Groq API</p>
           <p class="hiw-pillar-body">
-            A Python FastAPI app packaged in a Docker container and deployed on Render.
-            It acts as a secure orchestration layer. The Groq API key never leaves the server.
-            <code>ffmpeg</code> converts non-standard audio formats before forwarding to Groq.
-            CORS is configured to accept requests only from the Vercel frontend domain.
+            A Python FastAPI app on Render acts as a secure orchestration layer. The Groq API key
+            never leaves the server. Transcription uses Whisper large-v3, translation and all text
+            tasks use GPT-OSS-120B, all via Groq's low-latency inference API.
           </p>
           <ul class="hiw-pillar-list">
-            <li><strong>/transcribe</strong>: receives audio, calls Groq Whisper, batch-translates segments</li>
-            <li><strong>/analyze</strong>: sends transcript to Groq LLM, returns structured JSON insights</li>
-            <li><strong>/ask</strong>: answers natural language questions about the transcript</li>
-            <li><strong>/health</strong>: used by Render for liveness checks</li>
+            <li><strong>/transcribe</strong>: Groq Whisper large-v3 + batch segment translation</li>
+            <li><strong>/analyze</strong>: summary, key topics, tone, linguistic observation</li>
+            <li><strong>/ask</strong>: natural language Q&amp;A grounded in the transcript</li>
+            <li><strong>ffmpeg</strong> converts non-native formats before sending to Groq</li>
           </ul>
         </article>
 
         <article class="hiw-pillar">
           <div class="hiw-pillar-num">03</div>
-          <h2 class="hiw-pillar-title">Groq Cloud</h2>
-          <p class="hiw-pillar-sub">api.groq.com</p>
+          <h2 class="hiw-pillar-title">Self-hosted Whisper</h2>
+          <p class="hiw-pillar-sub">faster-whisper · Docker · HuggingFace Spaces</p>
           <p class="hiw-pillar-body">
-            Groq provides both the speech model and the language model, on the same
-            infrastructure, at very low latency. Transcription uses Whisper large-v3,
-            OpenAI's most accurate open-source speech model. All text tasks (translation,
-            insights, Q&amp;A) use <code>openai/gpt-oss-120b</code> via the chat completions API.
+            A separate FastAPI service on HuggingFace Spaces runs faster-whisper small (int8)
+            entirely on CPU with no external API calls. The Whisper model is baked into the
+            Docker image at build time so cold starts are instant. Language is forced to Urdu
+            to ensure Perso-Arabic script output for both Urdu and Pakistani Punjabi.
           </p>
           <ul class="hiw-pillar-list">
-            <li><strong>Whisper large-v3</strong>: transcription with segment timestamps and language detection</li>
-            <li><strong>GPT-OSS-120B</strong>: batch segment translation to English in one call</li>
-            <li><strong>GPT-OSS-120B</strong>: summary, key topics, tone, and speech observation</li>
-            <li><strong>GPT-OSS-120B</strong>: Q&amp;A grounded in the transcript</li>
+            <li>No API key required, fully self-contained</li>
+            <li>faster-whisper small, int8 quantized, CPU inference</li>
+            <li>Model pre-downloaded at Docker build, not at runtime</li>
+            <li>Transcription only, no translation or insights</li>
           </ul>
         </article>
 
@@ -189,20 +207,20 @@
   <section class="hiw-steps">
     <div class="hiw-inner">
       <div class="hiw-section-label">Step-by-step workflow</div>
-      <h2 class="hiw-steps-heading">From audio to insight in 9 steps</h2>
+      <h2 class="hiw-steps-heading">Groq Orchestration: full pipeline</h2>
       <ol class="hiw-steps-list">
         <li class="hiw-step">
           <span class="hiw-step-num">1</span>
           <div>
-            <strong>Upload or record</strong>
-            <p>User drops an audio file or clicks the mic button to record. Any format is accepted and the browser passes it as-is.</p>
+            <strong>Select engine and upload or record</strong>
+            <p>User selects Groq Orchestration, then drops an audio file or records from the microphone. Any format is accepted.</p>
           </div>
         </li>
         <li class="hiw-step">
           <span class="hiw-step-num">2</span>
           <div>
-            <strong>Send to backend</strong>
-            <p>The browser sends a <code>POST /transcribe</code> request with the audio as multipart form data over HTTPS.</p>
+            <strong>POST to Render backend</strong>
+            <p>Browser sends <code>POST /transcribe</code> with audio as multipart form data to the FastAPI service on Render over HTTPS.</p>
           </div>
         </li>
         <li class="hiw-step">
@@ -215,43 +233,68 @@
         <li class="hiw-step">
           <span class="hiw-step-num">4</span>
           <div>
-            <strong>Transcription on Groq</strong>
-            <p>The audio bytes are posted to Groq's Whisper large-v3 endpoint. The model detects the language (Urdu, Punjabi, etc.) and returns time-stamped segments.</p>
+            <strong>Groq Whisper transcription</strong>
+            <p>Audio is posted to Groq's Whisper large-v3 endpoint with <code>language=ur</code> forced. Returns time-stamped segments in Perso-Arabic script.</p>
           </div>
         </li>
         <li class="hiw-step">
           <span class="hiw-step-num">5</span>
           <div>
             <strong>Batch translation</strong>
-            <p>All segment texts are sent to Groq's LLM in a single prompt. The model returns one English translation per segment as a JSON array, one API call for all segments.</p>
+            <p>All segment texts are sent to GPT-OSS-120B in one prompt. Returns a JSON array of English translations, one per segment.</p>
           </div>
         </li>
         <li class="hiw-step">
           <span class="hiw-step-num">6</span>
           <div>
-            <strong>Response to browser</strong>
-            <p>Backend returns structured JSON: detected language, language probability, and the list of segments each with start/end times, original text, and English translation.</p>
+            <strong>Response assembled and rendered</strong>
+            <p>Backend returns segments with timestamps, original Urdu/Punjabi text, and English translation. Browser renders the full table.</p>
           </div>
         </li>
         <li class="hiw-step">
           <span class="hiw-step-num">7</span>
           <div>
-            <strong>Render transcript table</strong>
-            <p>The browser renders the segments as a table. Original Urdu/Punjabi text uses RTL-aware rendering; English translation shows in the adjacent column.</p>
+            <strong>AI insights</strong>
+            <p>Browser auto-sends <code>POST /analyze</code>. Groq LLM returns summary, key topics, tone, and a linguistic observation as structured JSON.</p>
           </div>
         </li>
         <li class="hiw-step">
           <span class="hiw-step-num">8</span>
           <div>
-            <strong>AI insights</strong>
-            <p>The frontend automatically sends a <code>POST /analyze</code> with the full translated transcript. Groq LLM returns a JSON object with summary, key topics, tone, and a linguistic observation.</p>
+            <strong>Ask anything</strong>
+            <p>User types a question. <code>POST /ask</code> sends the transcript and question together; the LLM answers strictly from the transcript content.</p>
+          </div>
+        </li>
+      </ol>
+
+      <h2 class="hiw-steps-heading" style="margin-top:3rem;">Self-hosted Whisper: transcription only</h2>
+      <ol class="hiw-steps-list">
+        <li class="hiw-step">
+          <span class="hiw-step-num">1</span>
+          <div>
+            <strong>Select Self-hosted Whisper engine</strong>
+            <p>User switches the engine toggle to Self-hosted Whisper. The translation column, insights, and Q&amp;A blocks are hidden automatically.</p>
           </div>
         </li>
         <li class="hiw-step">
-          <span class="hiw-step-num">9</span>
+          <span class="hiw-step-num">2</span>
           <div>
-            <strong>Ask anything</strong>
-            <p>The user types any question about the transcript. A <code>POST /ask</code> sends the transcript and question together; the LLM answers from the transcript content only.</p>
+            <strong>POST directly to HuggingFace Space</strong>
+            <p>Browser sends <code>POST /transcribe</code> directly to <code>farhan2-lingo.hf.space</code>. No Render backend involved.</p>
+          </div>
+        </li>
+        <li class="hiw-step">
+          <span class="hiw-step-num">3</span>
+          <div>
+            <strong>faster-whisper inference on CPU</strong>
+            <p>The HF Space container runs faster-whisper small (int8) with <code>language="ur"</code> forced. No external API call, everything runs locally inside Docker.</p>
+          </div>
+        </li>
+        <li class="hiw-step">
+          <span class="hiw-step-num">4</span>
+          <div>
+            <strong>Transcript returned</strong>
+            <p>Returns segments with start/end timestamps and Urdu/Shahmukhi text. Browser renders the time and original text columns only.</p>
           </div>
         </li>
       </ol>
@@ -305,15 +348,18 @@
             <tr><th>Layer</th><th>Technology</th><th>Role</th></tr>
           </thead>
           <tbody>
-            <tr><td>Frontend</td><td>HTML · CSS · JavaScript</td><td>Static UI, file upload, MediaRecorder, fetch API</td></tr>
+            <tr><td>Frontend</td><td>HTML · CSS · JavaScript</td><td>Static UI, engine toggle, file upload, MediaRecorder, fetch API</td></tr>
             <tr><td>Hosting (frontend)</td><td>Vercel</td><td>Static site deployment, global CDN</td></tr>
-            <tr><td>Backend</td><td>FastAPI + Uvicorn</td><td>REST API, multipart file handling, CORS</td></tr>
+            <tr><td>Backend (Groq mode)</td><td>FastAPI + Uvicorn</td><td>REST API, multipart file handling, CORS, Groq orchestration</td></tr>
             <tr><td>Container</td><td>Docker (python:3.11-slim)</td><td>Reproducible runtime, ffmpeg included</td></tr>
-            <tr><td>Hosting (backend)</td><td>Render</td><td>Docker web service, environment secrets</td></tr>
-            <tr><td>Transcription</td><td>Groq Whisper large-v3</td><td>Urdu/Punjabi speech to text with timestamps</td></tr>
+            <tr><td>Hosting (Groq mode)</td><td>Render</td><td>Docker web service, environment secrets</td></tr>
+            <tr><td>Transcription (Groq mode)</td><td>Groq Whisper large-v3</td><td>Urdu/Punjabi speech to text, Perso-Arabic script forced</td></tr>
             <tr><td>Translation</td><td>Groq GPT-OSS-120B</td><td>Batch segment translation to English</td></tr>
             <tr><td>Insights &amp; Q&amp;A</td><td>Groq GPT-OSS-120B</td><td>Summary, topics, tone, question answering</td></tr>
-            <tr><td>Format conversion</td><td>ffmpeg</td><td>WMA and other non-Groq-native formats → MP3</td></tr>
+            <tr><td>Backend (Whisper mode)</td><td>FastAPI + faster-whisper</td><td>Self-contained transcription, no external API</td></tr>
+            <tr><td>Transcription (Whisper mode)</td><td>faster-whisper small (int8)</td><td>CPU inference, model baked into Docker image</td></tr>
+            <tr><td>Hosting (Whisper mode)</td><td>HuggingFace Spaces</td><td>Free CPU Docker container, 16GB RAM</td></tr>
+            <tr><td>Format conversion</td><td>ffmpeg</td><td>Non-native formats to MP3 (Groq mode only)</td></tr>
           </tbody>
         </table>
       </div>
