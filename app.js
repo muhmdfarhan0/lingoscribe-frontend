@@ -27,6 +27,13 @@ let recordInterval    = null;
 let recordSecs        = 0;
 let busy              = false;
 
+// ── Wake up Render on page load ───────────────────────────────────────────────
+// Free tier spins down after 15 min. Pinging /health immediately gives the
+// server ~30-60 s to wake up before the user finishes selecting a file.
+(function warmUp() {
+  fetch(API_URL + "/health", { method: "GET" }).catch(() => {});
+})();
+
 // ── File upload ──────────────────────────────────────────────────────────────
 
 fileInput.addEventListener("change", () => {
@@ -136,8 +143,8 @@ async function sendToTranscribe(file) {
   setStatus("Transcribing audio…");
 
   const slowTimer = setTimeout(() => {
-    setStatus("Server is waking up — this can take up to a minute on the first request.");
-  }, 9000);
+    setStatus("Almost there — server is finishing its wake-up, hang tight.");
+  }, 15000);
 
   try {
     const form = new FormData();
