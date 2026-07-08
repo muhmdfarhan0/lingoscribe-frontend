@@ -3,41 +3,176 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>LingoScribe Mini</title>
+  <title>LingoScribe — Speech Intelligence for South Asian Languages</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;0,600;1,300;1,400;1,500&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet" />
   <link rel="stylesheet" href="style.css" />
 </head>
 <body>
-  <div class="container">
-    <header>
-      <h1>LingoScribe Mini</h1>
-      <p class="subtitle">Speech transcription &amp; translation for Urdu / Punjabi</p>
-    </header>
 
-    <section class="upload-section">
-      <label for="audioFile" class="file-label">
-        <span id="fileName">Choose an audio file…</span>
-        <input type="file" id="audioFile" accept="audio/*" />
-      </label>
-      <button id="processBtn" disabled>Process</button>
-    </section>
+  <!-- NAV -->
+  <nav>
+    <a href="/" class="nav-brand">
+      <svg class="logo-mark" width="36" height="36" viewBox="0 0 36 36" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <rect width="36" height="36" rx="8" fill="#0F1E35"/>
+        <rect x="7"  y="13" width="3.2" height="10" rx="1.6" fill="#F7F2E9"/>
+        <rect x="12" y="9"  width="3.2" height="18" rx="1.6" fill="#F7F2E9"/>
+        <rect x="17" y="5"  width="3.2" height="26" rx="1.6" fill="#F7F2E9"/>
+        <rect x="22" y="9"  width="3.2" height="18" rx="1.6" fill="#F7F2E9"/>
+        <rect x="27" y="13" width="3.2" height="10" rx="1.6" fill="#F7F2E9"/>
+      </svg>
+      <span class="wordmark">LingoScribe</span>
+    </a>
+    <div class="nav-links">
+      <a href="https://github.com/muhmdfarhan0" target="_blank" rel="noopener">GitHub</a>
+      <a href="https://www.linkedin.com/in/muhammad-farhan07567" target="_blank" rel="noopener">LinkedIn</a>
+      <a href="https://www.farhanai.online/contact" target="_blank" rel="noopener" class="nav-cta">Contact</a>
+    </div>
+  </nav>
 
-    <div id="status" class="status hidden"></div>
+  <!-- HERO -->
+  <section class="hero">
+    <div class="hero-inner">
+      <h1 class="hero-heading">
+        Speech, understood
+        <em class="hero-sub">for South Asian languages.</em>
+      </h1>
+      <p class="hero-desc">
+        Upload audio in any format. LingoScribe transcribes Urdu and Punjabi speech, 
+        translates each segment to English, and surfaces what matters — instantly.
+      </p>
 
-    <section id="resultsSection" class="hidden">
-      <div class="meta">
-        <span>Language detected: <strong id="langDetected">—</strong></span>
-        <span>Confidence: <strong id="langConf">—</strong></span>
+      <!-- UPLOAD ZONE -->
+      <div class="upload-zone" id="uploadZone">
+        <svg width="28" height="28" viewBox="0 0 28 28" fill="none">
+          <path d="M14 4v14M8 10l6-6 6 6" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
+          <path d="M4 20v2a2 2 0 002 2h16a2 2 0 002-2v-2" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>
+        </svg>
+        <div class="upload-text">
+          <span class="upload-primary">Drop your audio file here</span>
+          <span class="upload-secondary">or <label for="audioFile" class="file-browse">browse to upload</label></span>
+        </div>
+        <div class="upload-formats">WAV · MP3 · OGG · FLAC · M4A · WEBM · OPUS · AAC · WMA · MP4</div>
+        <input
+          type="file"
+          id="audioFile"
+          accept="audio/*,video/mp4,video/webm,.mp4,.m4a,.mp3,.wav,.flac,.ogg,.opus,.wma,.aac,.aiff,.amr,.3gp,.caf"
+        />
       </div>
-      <div class="table-wrapper">
-        <table id="resultsTable">
+
+      <div class="upload-actions">
+        <span id="selectedFile" class="selected-file"></span>
+        <button id="processBtn" disabled>Transcribe</button>
+      </div>
+    </div>
+  </section>
+
+  <!-- STATUS -->
+  <div id="statusBar" class="status-bar hidden">
+    <div class="status-inner">
+      <div class="wave-loader">
+        <span></span><span></span><span></span><span></span><span></span>
+      </div>
+      <span id="statusText">Processing…</span>
+    </div>
+  </div>
+
+  <!-- RESULTS -->
+  <section id="resultsSection" class="results hidden">
+    <div class="results-inner">
+
+      <!-- META ROW -->
+      <div class="meta-row">
+        <div class="meta-pill">
+          <span class="meta-label">Language</span>
+          <span class="meta-value" id="metaLang">—</span>
+        </div>
+        <div class="meta-pill">
+          <span class="meta-label">Segments</span>
+          <span class="meta-value" id="metaSegments">—</span>
+        </div>
+        <div class="meta-pill">
+          <span class="meta-label">Confidence</span>
+          <span class="meta-value" id="metaConf">—</span>
+        </div>
+      </div>
+
+      <!-- TRANSCRIPT TABLE -->
+      <div class="section-label">Transcript</div>
+      <div class="table-scroll">
+        <table class="transcript-table">
           <thead>
             <tr id="tableHead"></tr>
           </thead>
           <tbody id="tableBody"></tbody>
         </table>
       </div>
-    </section>
+
+      <!-- INSIGHTS -->
+      <div id="insightsBlock" class="insights-block hidden">
+        <div class="section-label">Insights</div>
+        <div class="insights-grid">
+          <div class="insight-card" id="cardSummary">
+            <div class="insight-card-label">Summary</div>
+            <div class="insight-card-body" id="insSummary"></div>
+          </div>
+          <div class="insight-card" id="cardTopics">
+            <div class="insight-card-label">Key Topics</div>
+            <ul class="topics-list" id="insTopics"></ul>
+          </div>
+          <div class="insight-card" id="cardTone">
+            <div class="insight-card-label">Tone</div>
+            <div class="insight-card-body" id="insTone"></div>
+          </div>
+          <div class="insight-card insight-card--wide" id="cardObs">
+            <div class="insight-card-label">Observation</div>
+            <div class="insight-card-body" id="insObs"></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ASK -->
+      <div id="askBlock" class="ask-block hidden">
+        <div class="section-label">Ask about this transcript</div>
+        <div class="ask-row">
+          <input type="text" id="askInput" class="ask-input" placeholder="What were the main points discussed?" />
+          <button id="askBtn" class="ask-btn">Ask</button>
+        </div>
+        <div id="askAnswer" class="ask-answer hidden"></div>
+      </div>
+
+    </div>
+  </section>
+
+  <!-- ERROR -->
+  <div id="errorBar" class="error-bar hidden">
+    <span id="errorText"></span>
+    <button onclick="document.getElementById('errorBar').classList.add('hidden')">Dismiss</button>
   </div>
+
+  <!-- FOOTER -->
+  <footer>
+    <div class="footer-inner">
+      <div class="footer-brand">
+        <svg width="24" height="24" viewBox="0 0 36 36" fill="none">
+          <rect width="36" height="36" rx="8" fill="#0F1E35"/>
+          <rect x="7"  y="13" width="3.2" height="10" rx="1.6" fill="#F7F2E9"/>
+          <rect x="12" y="9"  width="3.2" height="18" rx="1.6" fill="#F7F2E9"/>
+          <rect x="17" y="5"  width="3.2" height="26" rx="1.6" fill="#F7F2E9"/>
+          <rect x="22" y="9"  width="3.2" height="18" rx="1.6" fill="#F7F2E9"/>
+          <rect x="27" y="13" width="3.2" height="10" rx="1.6" fill="#F7F2E9"/>
+        </svg>
+        <span>LingoScribe</span>
+      </div>
+      <p class="footer-desc">Speech intelligence for Urdu and Punjabi.</p>
+      <div class="footer-links">
+        <a href="https://github.com/muhmdfarhan0" target="_blank" rel="noopener">GitHub</a>
+        <a href="https://www.linkedin.com/in/muhammad-farhan07567" target="_blank" rel="noopener">LinkedIn</a>
+        <a href="https://www.farhanai.online/contact" target="_blank" rel="noopener">Contact</a>
+      </div>
+    </div>
+  </footer>
 
   <script src="app.js"></script>
 </body>

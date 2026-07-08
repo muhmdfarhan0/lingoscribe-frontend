@@ -1,107 +1,212 @@
-// Update this to your deployed Render URL after deployment.
-// For local development, keep it pointing at localhost.
 const API_URL = "http://localhost:8000";
 
-const fileInput   = document.getElementById("audioFile");
-const fileLabel   = document.getElementById("fileName");
-const processBtn  = document.getElementById("processBtn");
-const statusEl    = document.getElementById("status");
+const uploadZone     = document.getElementById("uploadZone");
+const fileInput      = document.getElementById("audioFile");
+const selectedFile   = document.getElementById("selectedFile");
+const processBtn     = document.getElementById("processBtn");
+const statusBar      = document.getElementById("statusBar");
+const statusText     = document.getElementById("statusText");
 const resultsSection = document.getElementById("resultsSection");
-const langDetected   = document.getElementById("langDetected");
-const langConf       = document.getElementById("langConf");
-const tableHead      = document.getElementById("tableHead");
-const tableBody      = document.getElementById("tableBody");
+const insightsBlock  = document.getElementById("insightsBlock");
+const askBlock       = document.getElementById("askBlock");
+const askInput       = document.getElementById("askInput");
+const askBtn         = document.getElementById("askBtn");
+const askAnswer      = document.getElementById("askAnswer");
+const errorBar       = document.getElementById("errorBar");
+const errorText      = document.getElementById("errorText");
+
+let currentTranscript = "";
 
 fileInput.addEventListener("change", () => {
-  if (fileInput.files.length) {
-    fileLabel.textContent = fileInput.files[0].name;
-    processBtn.disabled = false;
-  }
+  if (fileInput.files.length) setFile(fileInput.files[0]);
 });
 
+uploadZone.addEventListener("click", (e) => {
+  if (!e.target.classList.contains("file-browse")) fileInput.click();
+});
+uploadZone.addEventListener("dragover", (e) => {
+  e.preventDefault();
+  uploadZone.classList.add("drag-over");
+});
+uploadZone.addEventListener("dragleave", () => uploadZone.classList.remove("drag-over"));
+uploadZone.addEventListener("drop", (e) => {
+  e.preventDefault();
+  uploadZone.classList.remove("drag-over");
+  const file = e.dataTransfer.files[0];
+  if (file) setFile(file);
+});
+
+function setFile(file) {
+  selectedFile.textContent = file.name;
+  processBtn.disabled = false;
+  fileInput._file = file;
+}
+
 processBtn.addEventListener("click", async () => {
-  const file = fileInput.files[0];
+  const file = fileInput.files[0] || fileInput._file;
   if (!file) return;
 
-  setStatus("loading", "Uploading and processing…");
+  reset();
+  setStatus("Transcribing audio…");
   processBtn.disabled = true;
-  resultsSection.classList.add("hidden");
 
-  // Show a "server waking up" message if the request takes more than 8s
   const slowTimer = setTimeout(() => {
-    setStatus("loading", "Waking up the server — this can take up to a minute on first request. Please wait…");
-  }, 8000);
+    setStatus("Server is waking up — this can take up to a minute on the first request.");
+  }, 9000);
 
   try {
     const form = new FormData();
     form.append("file", file);
-
-    const res = await fetch(`${API_URL}/transcribe`, { method: "POST", body: form });
+    const res = await fetch(API_URL + "/transcribe", { method: "POST", body: form });
     clearTimeout(slowTimer);
 
     if (!res.ok) {
       const err = await res.json().catch(() => ({ detail: res.statusText }));
-      throw new Error(err.detail || "Server error");
+      throw new Error(err.detail || "Transcription failed");
     }
 
     const data = await res.json();
+    hideStatus();
     renderResults(data);
-    statusEl.classList.add("hidden");
+
+    const hasTranslation = data.segments.some(
+      s => s.translation_en && !s.translation_en.includes("[translation unavailable")
+    );
+    currentTranscript = data.segments
+      .map(s => (hasTranslation ? (s.translation_en || s.text) : s.text))
+      .join(" ");
+
+    if (currentTranscript) runInsights(data.language, currentTranscript);
+
   } catch (err) {
     clearTimeout(slowTimer);
-    setStatus("error", `Error: ${err.message}`);
+    hideStatus();
+    showError(err.message);
   } finally {
     processBtn.disabled = false;
   }
 });
 
-function setStatus(type, message) {
-  statusEl.className = `status ${type}`;
-  statusEl.textContent = message;
-  statusEl.classList.remove("hidden");
-}
-
 function renderResults(data) {
-  langDetected.textContent = data.language || "unknown";
-  langConf.textContent     = data.language_probability
-    ? `${(data.language_probability * 100).toFixed(1)}%`
-    : "n/a";
+  const hasSpeaker = data.diarization_enabled && data.segments.some(s => s.speaker);
 
-  const hasSpeaker = data.diarization_enabled &&
-    data.segments.some(s => s.speaker);
+  document.getElementById("metaLang").textContent     = langName(data.language);
+  document.getElementById("metaSegments").textContent = data.segments.length;
+  document.getElementById("metaConf").textContent     =
+    data.language_probability ? Math.round(data.language_probability * 100) + "%" : "—";
 
-  // Build header
-  tableHead.innerHTML = "";
-  const cols = hasSpeaker
-    ? ["Speaker", "Time", "Original Text", "English Translation"]
-    : ["Time", "Original Text", "English Translation"];
-  cols.forEach(col => {
+  const head = document.getElementById("tableHead");
+  const body = document.getElementById("tableBody");
+  head.innerHTML = body.innerHTML = "";
+
+  const cols = hasSpeaker ? ["Speaker", "Time", "Original", "English"] : ["Time", "Original", "English"];
+  cols.forEach(c => {
     const th = document.createElement("th");
-    th.textContent = col;
-    tableHead.appendChild(th);
+    th.textContent = c;
+    head.appendChild(th);
   });
 
-  // Build rows
-  tableBody.innerHTML = "";
   data.segments.forEach(seg => {
     const tr = document.createElement("tr");
-    const time = `${fmtTime(seg.start)} → ${fmtTime(seg.end)}`;
-    const cells = hasSpeaker
-      ? [seg.speaker || "—", time, seg.text, seg.translation_en]
-      : [time, seg.text, seg.translation_en];
-    cells.forEach(val => {
-      const td = document.createElement("td");
-      td.textContent = val || "—";
-      tr.appendChild(td);
-    });
-    tableBody.appendChild(tr);
+    if (hasSpeaker) addCell(tr, seg.speaker || "—", "");
+    addCell(tr, fmtTime(seg.start) + " – " + fmtTime(seg.end), "td-time");
+    addCell(tr, seg.text, "td-original");
+    addCell(tr, seg.translation_en || "—", "td-translation");
+    body.appendChild(tr);
   });
 
   resultsSection.classList.remove("hidden");
+  askBlock.classList.remove("hidden");
+  window.scrollTo({ top: resultsSection.offsetTop - 80, behavior: "smooth" });
 }
 
+function addCell(row, text, cls) {
+  const td = document.createElement("td");
+  if (cls) td.className = cls;
+  td.textContent = text;
+  row.appendChild(td);
+}
+
+async function runInsights(language, text) {
+  insightsBlock.classList.remove("hidden");
+  try {
+    const res = await fetch(API_URL + "/analyze", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ text, language }),
+    });
+    if (!res.ok) throw new Error();
+    const d = await res.json();
+
+    document.getElementById("insSummary").textContent = d.summary || "—";
+    document.getElementById("insTone").textContent    = d.tone ? capitalize(d.tone) : "—";
+    document.getElementById("insObs").textContent     = d.observation || "—";
+
+    const ul = document.getElementById("insTopics");
+    ul.innerHTML = "";
+    (d.key_topics || []).forEach(t => {
+      const li = document.createElement("li");
+      li.textContent = t;
+      ul.appendChild(li);
+    });
+
+    ["cardSummary", "cardTopics", "cardTone", "cardObs"].forEach((id, i) => {
+      setTimeout(() => document.getElementById(id).classList.add("visible"), i * 100);
+    });
+  } catch {
+    insightsBlock.classList.add("hidden");
+  }
+}
+
+askBtn.addEventListener("click", askQuestion);
+askInput.addEventListener("keydown", e => { if (e.key === "Enter") askQuestion(); });
+
+async function askQuestion() {
+  const q = askInput.value.trim();
+  if (!q || !currentTranscript) return;
+  askBtn.disabled = true;
+  askBtn.textContent = "…";
+  askAnswer.classList.add("hidden");
+  try {
+    const res = await fetch(API_URL + "/ask", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ transcript: currentTranscript, question: q }),
+    });
+    if (!res.ok) throw new Error("Could not get answer");
+    const d = await res.json();
+    askAnswer.textContent = d.answer;
+    askAnswer.classList.remove("hidden");
+  } catch (err) {
+    showError(err.message);
+  } finally {
+    askBtn.disabled = false;
+    askBtn.textContent = "Ask";
+  }
+}
+
+function setStatus(msg) { statusText.textContent = msg; statusBar.classList.remove("hidden"); }
+function hideStatus() { statusBar.classList.add("hidden"); }
+function showError(msg) {
+  errorText.textContent = msg;
+  errorBar.classList.remove("hidden");
+  setTimeout(() => errorBar.classList.add("hidden"), 9000);
+}
+function reset() {
+  resultsSection.classList.add("hidden");
+  insightsBlock.classList.add("hidden");
+  askBlock.classList.add("hidden");
+  askAnswer.classList.add("hidden");
+  errorBar.classList.add("hidden");
+  currentTranscript = "";
+  document.querySelectorAll(".insight-card").forEach(c => c.classList.remove("visible"));
+}
 function fmtTime(sec) {
   const m = Math.floor(sec / 60);
-  const s = (sec % 60).toFixed(1).padStart(4, "0");
-  return `${m}:${s}`;
+  const s = String(Math.floor(sec % 60)).padStart(2, "0");
+  return m + ":" + s;
+}
+function capitalize(s) { return s ? s.charAt(0).toUpperCase() + s.slice(1) : s; }
+function langName(code) {
+  return { ur: "Urdu", pa: "Punjabi", hi: "Hindi", en: "English", ar: "Arabic" }[code] || code.toUpperCase();
 }
