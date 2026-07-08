@@ -14,8 +14,20 @@ const askBtn         = document.getElementById("askBtn");
 const askAnswer      = document.getElementById("askAnswer");
 const errorBar       = document.getElementById("errorBar");
 const errorText      = document.getElementById("errorText");
+const micBtn         = document.getElementById("micBtn");
+const micIcon        = document.getElementById("micIcon");
+const stopIcon       = document.getElementById("stopIcon");
+const recordLabel    = document.getElementById("recordLabel");
+const recordTimerEl  = document.getElementById("recordTimer");
 
 let currentTranscript = "";
+let mediaRecorder     = null;
+let audioChunks       = [];
+let recordInterval    = null;
+let recordSecs        = 0;
+let busy              = false;
+
+// ── File upload ──────────────────────────────────────────────────────────────
 
 fileInput.addEventListener("change", () => {
   if (fileInput.files.length) setFile(fileInput.files[0]);
@@ -45,10 +57,83 @@ function setFile(file) {
 processBtn.addEventListener("click", async () => {
   const file = fileInput.files[0] || fileInput._file;
   if (!file) return;
+  await sendToTranscribe(file);
+});
 
+// ── Microphone recording ──────────────────────────────────────────────────────
+
+if (!navigator.mediaDevices || !window.MediaRecorder) {
+  document.getElementById("recordSection").style.display = "none";
+}
+
+micBtn.addEventListener("click", async () => {
+  if (busy) return;
+  if (mediaRecorder && mediaRecorder.state === "recording") {
+    stopRecording();
+  } else {
+    await startRecording();
+  }
+});
+
+async function startRecording() {
+  try {
+    const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+    audioChunks = [];
+
+    const mimeType = ["audio/webm", "audio/ogg", "audio/mp4"]
+      .find(t => MediaRecorder.isTypeSupported(t)) || "";
+    mediaRecorder = new MediaRecorder(stream, mimeType ? { mimeType } : undefined);
+
+    mediaRecorder.ondataavailable = (e) => {
+      if (e.data.size > 0) audioChunks.push(e.data);
+    };
+
+    mediaRecorder.onstop = async () => {
+      stream.getTracks().forEach((t) => t.stop());
+      const type = mediaRecorder.mimeType || "audio/webm";
+      const ext  = type.includes("ogg") ? "ogg" : type.includes("mp4") ? "mp4" : "webm";
+      const blob = new Blob(audioChunks, { type });
+      const file = new File([blob], `recording.${ext}`, { type });
+      await sendToTranscribe(file);
+    };
+
+    mediaRecorder.start(200);
+
+    micBtn.classList.add("recording");
+    micIcon.classList.add("hidden");
+    stopIcon.classList.remove("hidden");
+    recordLabel.textContent = "Recording";
+    recordTimerEl.textContent = "0:00";
+    recordTimerEl.classList.remove("hidden");
+
+    recordSecs = 0;
+    recordInterval = setInterval(() => {
+      recordSecs++;
+      const m = Math.floor(recordSecs / 60);
+      const s = String(recordSecs % 60).padStart(2, "0");
+      recordTimerEl.textContent = `${m}:${s}`;
+    }, 1000);
+  } catch {
+    showError("Microphone access was denied. Please allow microphone permission and try again.");
+  }
+}
+
+function stopRecording() {
+  clearInterval(recordInterval);
+  if (mediaRecorder && mediaRecorder.state !== "inactive") mediaRecorder.stop();
+  micBtn.classList.remove("recording");
+  micIcon.classList.remove("hidden");
+  stopIcon.classList.add("hidden");
+  recordLabel.textContent = "Click to record";
+  recordTimerEl.classList.add("hidden");
+}
+
+// ── Shared transcription send ─────────────────────────────────────────────────
+
+async function sendToTranscribe(file) {
+  setBusy(true);
   reset();
   setStatus("Transcribing audio…");
-  processBtn.disabled = true;
 
   const slowTimer = setTimeout(() => {
     setStatus("Server is waking up — this can take up to a minute on the first request.");
@@ -70,25 +155,32 @@ processBtn.addEventListener("click", async () => {
     renderResults(data);
 
     const hasTranslation = data.segments.some(
-      s => s.translation_en && !s.translation_en.includes("[translation unavailable")
+      (s) => s.translation_en && !s.translation_en.includes("[translation unavailable")
     );
     currentTranscript = data.segments
-      .map(s => (hasTranslation ? (s.translation_en || s.text) : s.text))
+      .map((s) => (hasTranslation ? s.translation_en || s.text : s.text))
       .join(" ");
 
     if (currentTranscript) runInsights(data.language, currentTranscript);
-
   } catch (err) {
     clearTimeout(slowTimer);
     hideStatus();
     showError(err.message);
   } finally {
-    processBtn.disabled = false;
+    setBusy(false);
   }
-});
+}
+
+function setBusy(state) {
+  busy = state;
+  processBtn.disabled = state;
+  micBtn.disabled = state;
+}
+
+// ── Results rendering ─────────────────────────────────────────────────────────
 
 function renderResults(data) {
-  const hasSpeaker = data.diarization_enabled && data.segments.some(s => s.speaker);
+  const hasSpeaker = data.diarization_enabled && data.segments.some((s) => s.speaker);
 
   document.getElementById("metaLang").textContent     = langName(data.language);
   document.getElementById("metaSegments").textContent = data.segments.length;
@@ -99,14 +191,16 @@ function renderResults(data) {
   const body = document.getElementById("tableBody");
   head.innerHTML = body.innerHTML = "";
 
-  const cols = hasSpeaker ? ["Speaker", "Time", "Original", "English"] : ["Time", "Original", "English"];
-  cols.forEach(c => {
+  const cols = hasSpeaker
+    ? ["Speaker", "Time", "Original", "English"]
+    : ["Time", "Original", "English"];
+  cols.forEach((c) => {
     const th = document.createElement("th");
     th.textContent = c;
     head.appendChild(th);
   });
 
-  data.segments.forEach(seg => {
+  data.segments.forEach((seg) => {
     const tr = document.createElement("tr");
     if (hasSpeaker) addCell(tr, seg.speaker || "—", "");
     addCell(tr, fmtTime(seg.start) + " – " + fmtTime(seg.end), "td-time");
@@ -127,6 +221,8 @@ function addCell(row, text, cls) {
   row.appendChild(td);
 }
 
+// ── Insights ──────────────────────────────────────────────────────────────────
+
 async function runInsights(language, text) {
   insightsBlock.classList.remove("hidden");
   try {
@@ -144,7 +240,7 @@ async function runInsights(language, text) {
 
     const ul = document.getElementById("insTopics");
     ul.innerHTML = "";
-    (d.key_topics || []).forEach(t => {
+    (d.key_topics || []).forEach((t) => {
       const li = document.createElement("li");
       li.textContent = t;
       ul.appendChild(li);
@@ -158,8 +254,10 @@ async function runInsights(language, text) {
   }
 }
 
+// ── Ask ───────────────────────────────────────────────────────────────────────
+
 askBtn.addEventListener("click", askQuestion);
-askInput.addEventListener("keydown", e => { if (e.key === "Enter") askQuestion(); });
+askInput.addEventListener("keydown", (e) => { if (e.key === "Enter") askQuestion(); });
 
 async function askQuestion() {
   const q = askInput.value.trim();
@@ -185,8 +283,10 @@ async function askQuestion() {
   }
 }
 
+// ── Utilities ─────────────────────────────────────────────────────────────────
+
 function setStatus(msg) { statusText.textContent = msg; statusBar.classList.remove("hidden"); }
-function hideStatus() { statusBar.classList.add("hidden"); }
+function hideStatus()   { statusBar.classList.add("hidden"); }
 function showError(msg) {
   errorText.textContent = msg;
   errorBar.classList.remove("hidden");
@@ -199,14 +299,15 @@ function reset() {
   askAnswer.classList.add("hidden");
   errorBar.classList.add("hidden");
   currentTranscript = "";
-  document.querySelectorAll(".insight-card").forEach(c => c.classList.remove("visible"));
+  document.querySelectorAll(".insight-card").forEach((c) => c.classList.remove("visible"));
 }
 function fmtTime(sec) {
   const m = Math.floor(sec / 60);
   const s = String(Math.floor(sec % 60)).padStart(2, "0");
-  return m + ":" + s;
+  return `${m}:${s}`;
 }
 function capitalize(s) { return s ? s.charAt(0).toUpperCase() + s.slice(1) : s; }
 function langName(code) {
-  return { ur: "Urdu", pa: "Punjabi", hi: "Hindi", en: "English", ar: "Arabic" }[code] || code.toUpperCase();
+  return { ur: "Urdu", pa: "Punjabi", hi: "Hindi", en: "English", ar: "Arabic" }[code]
+    || code.toUpperCase();
 }

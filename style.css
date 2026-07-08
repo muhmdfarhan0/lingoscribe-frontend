@@ -76,6 +76,47 @@ button {
 button:hover:not(:disabled) { background: var(--navy-lt); }
 button:disabled { opacity: .38; cursor: not-allowed; }
 
+/* Divider */
+.input-divider {
+  display: flex; align-items: center; gap: 1rem;
+  margin: 1.4rem 0; color: var(--ink-3); font-size: .82rem; letter-spacing: .04em;
+}
+.input-divider::before, .input-divider::after {
+  content: ""; flex: 1; height: 1px; background: var(--border);
+}
+
+/* Record */
+.record-section {
+  border: 1.5px dashed var(--border); border-radius: 10px;
+  padding: 2rem; display: flex; flex-direction: column; align-items: center; gap: .75rem;
+  background: rgba(255,255,255,.35); transition: border-color .2s;
+}
+.record-section:hover { border-color: #c5c0b8; }
+.mic-btn {
+  width: 60px; height: 60px; border-radius: 50%;
+  background: var(--navy); color: var(--cream);
+  display: flex; align-items: center; justify-content: center;
+  padding: 0; position: relative; flex-shrink: 0;
+  transition: background .2s, transform .1s;
+}
+.mic-btn:hover:not(:disabled) { background: var(--navy-lt); transform: scale(1.05); }
+.mic-btn:disabled { opacity: .38; cursor: not-allowed; transform: none; }
+.mic-btn.recording { background: #b03020; }
+.mic-btn.recording::after {
+  content: ""; position: absolute; inset: -5px; border-radius: 50%;
+  border: 2px solid #b03020; animation: mic-pulse 1.4s ease-out infinite;
+}
+@keyframes mic-pulse {
+  0%  { transform: scale(1); opacity: .75; }
+  100%{ transform: scale(1.65); opacity: 0; }
+}
+.record-meta { display: flex; align-items: center; gap: .6rem; }
+.record-label { font-size: .875rem; color: var(--ink-2); font-weight: 500; }
+.record-timer {
+  font-variant-numeric: tabular-nums; font-size: .85rem;
+  font-weight: 600; color: #b03020; letter-spacing: .02em;
+}
+
 /* Status */
 .status-bar { background: var(--cream-dk); border-top: 1px solid var(--border); border-bottom: 1px solid var(--border); padding: 1.1rem 2.5rem; }
 .status-inner { display: flex; align-items: center; gap: 1rem; max-width: 780px; margin: 0 auto; }
