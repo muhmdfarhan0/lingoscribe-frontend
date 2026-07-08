@@ -19,17 +19,15 @@
   <meta property="og:title" content="How LingoScribe Works: Urdu and Punjabi AI Speech Pipeline" />
   <meta property="og:description" content="Step-by-step breakdown of how LingoScribe transcribes Urdu and Punjabi audio. From browser upload through Groq Whisper, LLM translation, and AI insights." />
   <meta property="og:url" content="https://lingoscribe-frontend.vercel.app/how-it-works.html" />
-  <meta property="og:image" content="https://lingoscribe-frontend.vercel.app/how-it-works-diagram.png" />
-  <meta property="og:image:width" content="1344" />
-  <meta property="og:image:height" content="896" />
-  <meta property="og:image:alt" content="LingoScribe system architecture: browser, FastAPI backend, Groq Whisper and LLM" />
+  <meta property="og:image" content="https://lingoscribe-frontend.vercel.app/og-image.svg" />
+  <meta property="og:image:alt" content="LingoScribe: AI Speech to Text for Urdu and Punjabi" />
 
   <!-- Twitter Card -->
   <meta name="twitter:card" content="summary_large_image" />
   <meta name="twitter:title" content="How LingoScribe Works: Urdu and Punjabi AI Speech Pipeline" />
   <meta name="twitter:description" content="Step-by-step breakdown of how LingoScribe transcribes Urdu and Punjabi speech. Groq Whisper, LLM translation, FastAPI, Docker." />
-  <meta name="twitter:image" content="https://lingoscribe-frontend.vercel.app/how-it-works-diagram.png" />
-  <meta name="twitter:image:alt" content="LingoScribe architecture diagram" />
+  <meta name="twitter:image" content="https://lingoscribe-frontend.vercel.app/og-image.svg" />
+  <meta name="twitter:image:alt" content="LingoScribe: AI Speech to Text for Urdu and Punjabi" />
   <meta name="twitter:creator" content="@muhmdfarhan0" />
 
   <!-- Structured Data -->
@@ -40,7 +38,7 @@
     "headline": "How LingoScribe Works: Urdu and Punjabi AI Speech Pipeline Explained",
     "description": "A detailed walkthrough of the LingoScribe speech-to-text pipeline: browser upload, FastAPI backend on Render, Groq Whisper large-v3 transcription, LLM batch translation, and AI insights.",
     "url": "https://lingoscribe-frontend.vercel.app/how-it-works.html",
-    "image": "https://lingoscribe-frontend.vercel.app/how-it-works-diagram.png",
+    "image": "https://lingoscribe-frontend.vercel.app/og-image.svg",
     "author": {
       "@type": "Person",
       "name": "Muhammad Farhan",
@@ -106,39 +104,6 @@
     </div>
   </section>
 
-  <!-- DIAGRAM 1 -->
-  <section class="hiw-diagram-section">
-    <div class="hiw-inner">
-      <p class="hiw-section-label" style="margin-bottom:1.2rem;">System overview</p>
-      <img
-        src="how-it-works-diagram.png"
-        alt="LingoScribe system architecture showing browser, FastAPI backend on Render, and Groq Cloud with Whisper large-v3 and LLM models"
-        class="hiw-diagram"
-        width="1344"
-        height="896"
-        loading="eager"
-      />
-    </div>
-  </section>
-
-  <!-- DIAGRAM 2 -->
-  <section class="hiw-diagram-section" style="border-top:1px solid var(--border);">
-    <div class="hiw-inner">
-      <p class="hiw-section-label" style="margin-bottom:1.2rem;">Self-hosted Whisper on HuggingFace</p>
-      <img
-        src="architecture-diagram.png"
-        alt="LingoScribe self-hosted Whisper engine running on HuggingFace Spaces Docker container with faster-whisper small model"
-        class="hiw-diagram"
-        loading="lazy"
-      />
-      <p style="margin-top:1rem;font-size:.85rem;color:var(--ink-3);line-height:1.6;">
-        The self-hosted engine runs <strong>faster-whisper small</strong> (int8 quantized) inside a Docker container
-        on HuggingFace Spaces free CPU tier. The model weights are baked into the Docker image at build time
-        so the container starts in seconds with no download on every cold start. Language is forced to Urdu
-        to guarantee Perso-Arabic script output for both Urdu and Pakistani Punjabi (Shahmukhi).
-      </p>
-    </div>
-  </section>
 
   <!-- THREE PILLARS -->
   <section class="hiw-pillars">
