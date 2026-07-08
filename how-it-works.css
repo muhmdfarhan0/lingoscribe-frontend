@@ -81,7 +81,7 @@
 .hiw-pillar-list li {
   font-size: .86rem; color: var(--ink-2); padding-left: 1.1rem; position: relative; line-height: 1.5;
 }
-.hiw-pillar-list li::before { content: "—"; position: absolute; left: 0; color: var(--ink-3); }
+.hiw-pillar-list li::before { content: "-"; position: absolute; left: 0; color: var(--ink-3); }
 
 /* Steps */
 .hiw-steps { padding: 4rem 2rem; border-bottom: 1px solid var(--border); }

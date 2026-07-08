@@ -145,7 +145,7 @@ async function sendToTranscribe(file) {
   setStatus("Transcribing audio…");
 
   const slowTimer = setTimeout(() => {
-    setStatus("Almost there — server is finishing its wake-up, hang tight.");
+    setStatus("Almost there. Server is finishing its wake-up, hang tight.");
   }, 15000);
 
   try {
@@ -194,7 +194,7 @@ function renderResults(data) {
   document.getElementById("metaLang").textContent     = langName(data.language);
   document.getElementById("metaSegments").textContent = data.segments.length;
   document.getElementById("metaConf").textContent     =
-    data.language_probability ? Math.round(data.language_probability * 100) + "%" : "—";
+    data.language_probability ? Math.round(data.language_probability * 100) + "%" : "-";
 
   const head = document.getElementById("tableHead");
   const body = document.getElementById("tableBody");
@@ -211,10 +211,10 @@ function renderResults(data) {
 
   data.segments.forEach((seg) => {
     const tr = document.createElement("tr");
-    if (hasSpeaker) addCell(tr, seg.speaker || "—", "");
-    addCell(tr, fmtTime(seg.start) + " – " + fmtTime(seg.end), "td-time");
+    if (hasSpeaker) addCell(tr, seg.speaker || "-", "");
+    addCell(tr, fmtTime(seg.start) + " - " + fmtTime(seg.end), "td-time");
     addCell(tr, seg.text, "td-original");
-    addCell(tr, seg.translation_en || "—", "td-translation");
+    addCell(tr, seg.translation_en || "-", "td-translation");
     body.appendChild(tr);
   });
 
@@ -243,9 +243,9 @@ async function runInsights(language, text) {
     if (!res.ok) throw new Error();
     const d = await res.json();
 
-    document.getElementById("insSummary").textContent = d.summary || "—";
-    document.getElementById("insTone").textContent    = d.tone ? capitalize(d.tone) : "—";
-    document.getElementById("insObs").textContent     = d.observation || "—";
+    document.getElementById("insSummary").textContent = d.summary || "-";
+    document.getElementById("insTone").textContent    = d.tone ? capitalize(d.tone) : "-";
+    document.getElementById("insObs").textContent     = d.observation || "-";
 
     const ul = document.getElementById("insTopics");
     ul.innerHTML = "";
