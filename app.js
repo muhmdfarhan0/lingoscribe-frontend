@@ -1,4 +1,8 @@
-const API_URL = "https://lingoscribe-backend-wb3k.onrender.com";
+const GROQ_URL = "https://lingoscribe-backend-wb3k.onrender.com";
+const HF_URL   = "https://farhan2-lingo.hf.space";
+
+let activeEngine = "groq";
+let API_URL = GROQ_URL;
 
 const uploadZone     = document.getElementById("uploadZone");
 const fileInput      = document.getElementById("audioFile");
@@ -27,13 +31,36 @@ let recordInterval    = null;
 let recordSecs        = 0;
 let busy              = false;
 
+// ── Engine toggle ─────────────────────────────────────────────────────────────
+
+document.querySelectorAll(".engine-pill").forEach((btn) => {
+  btn.addEventListener("click", () => {
+    if (busy) return;
+    document.querySelectorAll(".engine-pill").forEach((b) => b.classList.remove("active"));
+    btn.classList.add("active");
+    activeEngine = btn.dataset.engine;
+    API_URL = activeEngine === "hf" ? HF_URL : GROQ_URL;
+    const notice = document.getElementById("engineNotice");
+    if (activeEngine === "hf") {
+      notice.classList.remove("hidden");
+    } else {
+      notice.classList.add("hidden");
+    }
+    reset();
+  });
+});
+
 // ── Keep Render awake ────────────────────────────────────────────────────────
 // Free tier sleeps after 15 min of inactivity. Ping /health on load so the
 // server is warm before the user clicks Transcribe, then repeat every 10 min
 // while the tab is open to prevent it sleeping again.
 (function keepAlive() {
-  fetch(API_URL + "/health").catch(() => {});
-  setInterval(() => fetch(API_URL + "/health").catch(() => {}), 10 * 60 * 1000);
+  fetch(GROQ_URL + "/health").catch(() => {});
+  fetch(HF_URL + "/health").catch(() => {});
+  setInterval(() => {
+    fetch(GROQ_URL + "/health").catch(() => {});
+    fetch(HF_URL + "/health").catch(() => {});
+  }, 10 * 60 * 1000);
 })();
 
 // ── File upload ──────────────────────────────────────────────────────────────
@@ -170,7 +197,12 @@ async function sendToTranscribe(file) {
       .map((s) => (hasTranslation ? s.translation_en || s.text : s.text))
       .join(" ");
 
-    if (currentTranscript) runInsights(data.language, currentTranscript);
+    if (activeEngine === "hf") {
+      insightsBlock.classList.add("hidden");
+      askBlock.classList.add("hidden");
+    } else if (currentTranscript) {
+      runInsights(data.language, currentTranscript);
+    }
   } catch (err) {
     clearTimeout(slowTimer);
     hideStatus();
@@ -200,9 +232,10 @@ function renderResults(data) {
   const body = document.getElementById("tableBody");
   head.innerHTML = body.innerHTML = "";
 
+  const showTranslation = activeEngine !== "hf";
   const cols = hasSpeaker
-    ? ["Speaker", "Time", "Original", "English"]
-    : ["Time", "Original", "English"];
+    ? (showTranslation ? ["Speaker", "Time", "Original", "English"] : ["Speaker", "Time", "Original"])
+    : (showTranslation ? ["Time", "Original", "English"] : ["Time", "Original"]);
   cols.forEach((c) => {
     const th = document.createElement("th");
     th.textContent = c;
@@ -214,7 +247,7 @@ function renderResults(data) {
     if (hasSpeaker) addCell(tr, seg.speaker || "-", "");
     addCell(tr, fmtTime(seg.start) + " - " + fmtTime(seg.end), "td-time");
     addCell(tr, seg.text, "td-original");
-    addCell(tr, seg.translation_en || "-", "td-translation");
+    if (showTranslation) addCell(tr, seg.translation_en || "-", "td-translation");
     body.appendChild(tr);
   });
 

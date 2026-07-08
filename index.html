@@ -117,6 +117,29 @@
         translates each segment to English, and surfaces what matters instantly.
       </p>
 
+      <!-- ENGINE SELECTOR -->
+      <div class="engine-selector">
+        <span class="engine-selector-label">Engine</span>
+        <div class="engine-pills">
+          <button class="engine-pill active" data-engine="groq" type="button">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none">
+              <path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/>
+            </svg>
+            Groq Orchestration
+          </button>
+          <button class="engine-pill" data-engine="hf" type="button">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none">
+              <circle cx="12" cy="12" r="9" stroke="currentColor" stroke-width="1.8"/>
+              <path d="M9 9h.01M15 9h.01M9 15s1 2 3 2 3-2 3-2" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>
+            </svg>
+            Self-hosted Whisper
+          </button>
+        </div>
+      </div>
+      <div class="engine-notice hidden" id="engineNotice">
+        Self-hosted mode - transcription only. Translation and AI insights are not available in this mode.
+      </div>
+
       <!-- UPLOAD ZONE -->
       <div class="upload-zone" id="uploadZone">
         <svg width="28" height="28" viewBox="0 0 28 28" fill="none">
