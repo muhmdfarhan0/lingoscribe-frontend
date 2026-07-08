@@ -27,11 +27,13 @@ let recordInterval    = null;
 let recordSecs        = 0;
 let busy              = false;
 
-// ── Wake up Render on page load ───────────────────────────────────────────────
-// Free tier spins down after 15 min. Pinging /health immediately gives the
-// server ~30-60 s to wake up before the user finishes selecting a file.
-(function warmUp() {
-  fetch(API_URL + "/health", { method: "GET" }).catch(() => {});
+// ── Keep Render awake ────────────────────────────────────────────────────────
+// Free tier sleeps after 15 min of inactivity. Ping /health on load so the
+// server is warm before the user clicks Transcribe, then repeat every 10 min
+// while the tab is open to prevent it sleeping again.
+(function keepAlive() {
+  fetch(API_URL + "/health").catch(() => {});
+  setInterval(() => fetch(API_URL + "/health").catch(() => {}), 10 * 60 * 1000);
 })();
 
 // ── File upload ──────────────────────────────────────────────────────────────
