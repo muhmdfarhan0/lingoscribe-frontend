@@ -1,0 +1,4 @@
+User-agent: *
+Allow: /
+
+Sitemap: https://lingoscribe-frontend.vercel.app/sitemap.xml
